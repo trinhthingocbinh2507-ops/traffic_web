@@ -1,0 +1,443 @@
+<!doctype html>
+<html lang="vi">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+
+    <title>Hệ thống đèn giao thông thông minh</title>
+
+    <link
+      rel="stylesheet"
+      href="{{ url_for('static', filename='style.css') }}"
+    />
+  </head>
+
+  <body>
+    <div class="container">
+      <!-- ============================= -->
+      <!-- TIÊU ĐỀ -->
+      <!-- ============================= -->
+
+      <header class="header">
+        <h1>HỆ THỐNG ĐÈN GIAO THÔNG THÔNG MINH</h1>
+
+        <p>
+          Điều khiển đèn giao thông dựa trên mật độ phương tiện sử dụng xử lý
+          ảnh và IoT
+        </p>
+      </header>
+
+      <!-- ============================= -->
+      <!-- VIDEO -->
+      <!-- ============================= -->
+
+      <section class="section">
+        <h2>🎥 CAMERA GIÁM SÁT</h2>
+
+        <div class="video-container">
+          <video id="trafficVideo" width="100%" controls muted>
+            <source
+              src="{{ url_for('static', filename='noname.mp4') }}"
+              type="video/mp4"
+            />
+
+            Trình duyệt không hỗ trợ video.
+          </video>
+        </div>
+
+        <p id="videoStatus" class="video-status">
+          Trạng thái video: Đang chờ...
+        </p>
+      </section>
+
+      <!-- ============================= -->
+      <!-- SỐ XE 4 HƯỚNG -->
+      <!-- ============================= -->
+
+      <section class="section">
+        <h2>🚗 MẬT ĐỘ PHƯƠNG TIỆN</h2>
+
+        <div class="vehicle-grid">
+          <!-- HƯỚNG 1 -->
+          <div class="vehicle-card">
+            <h3>Hướng 1</h3>
+
+            <div class="vehicle-number" id="received1">0</div>
+
+            <p>xe</p>
+          </div>
+
+          <!-- HƯỚNG 2 -->
+          <div class="vehicle-card">
+            <h3>Hướng 2</h3>
+
+            <div class="vehicle-number" id="received2">0</div>
+
+            <p>xe</p>
+          </div>
+
+          <!-- HƯỚNG 3 -->
+          <div class="vehicle-card">
+            <h3>Hướng 3</h3>
+
+            <div class="vehicle-number" id="received3">0</div>
+
+            <p>xe</p>
+          </div>
+
+          <!-- HƯỚNG 4 -->
+          <div class="vehicle-card">
+            <h3>Hướng 4</h3>
+
+            <div class="vehicle-number" id="received4">0</div>
+
+            <p>xe</p>
+          </div>
+        </div>
+      </section>
+
+      <!-- ============================= -->
+      <!-- TRẠNG THÁI ĐÈN -->
+      <!-- ============================= -->
+
+      <section class="section">
+        <h2>🚦 TRẠNG THÁI ĐÈN GIAO THÔNG</h2>
+
+        <div class="traffic-grid">
+          <!-- NHÓM 1 -->
+          <div class="traffic-card">
+            <h3>
+              Nhóm 1
+              <span class="direction-text"> (Hướng 1 + Hướng 3) </span>
+            </h3>
+
+            <div id="group1Light" class="light-status">ĐỎ</div>
+
+            <div class="traffic-time">
+              Còn lại:
+              <strong id="group1Time">0</strong>
+              giây
+            </div>
+          </div>
+
+          <!-- NHÓM 2 -->
+          <div class="traffic-card">
+            <h3>
+              Nhóm 2
+              <span class="direction-text"> (Hướng 2 + Hướng 4) </span>
+            </h3>
+
+            <div id="group2Light" class="light-status">ĐỎ</div>
+
+            <div class="traffic-time">
+              Còn lại:
+              <strong id="group2Time">0</strong>
+              giây
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- ============================= -->
+      <!-- THỜI GIAN ĐÈN -->
+      <!-- ============================= -->
+
+      <section class="section">
+        <h2>⏱️ THỜI GIAN ĐÈN</h2>
+
+        <div class="timing-grid">
+          <!-- NHÓM 1 -->
+
+          <div class="timing-card">
+            <h3>
+              Nhóm 1
+              <span class="direction-text"> (Hướng 1 + Hướng 3) </span>
+            </h3>
+
+            <div class="timing-row">
+              <span>🟢 Xanh</span>
+
+              <strong id="green1"> 15 </strong>
+
+              <span>giây</span>
+            </div>
+
+            <div class="timing-row">
+              <span>🟡 Vàng</span>
+
+              <strong id="yellow1"> 3 </strong>
+
+              <span>giây</span>
+            </div>
+
+            <div class="timing-row">
+              <span>🔴 Đỏ</span>
+
+              <strong id="red1"> 18 </strong>
+
+              <span>giây</span>
+            </div>
+          </div>
+
+          <!-- NHÓM 2 -->
+
+          <div class="timing-card">
+            <h3>
+              Nhóm 2
+              <span class="direction-text"> (Hướng 2 + Hướng 4) </span>
+            </h3>
+
+            <div class="timing-row">
+              <span>🟢 Xanh</span>
+
+              <strong id="green2"> 15 </strong>
+
+              <span>giây</span>
+            </div>
+
+            <div class="timing-row">
+              <span>🟡 Vàng</span>
+
+              <strong id="yellow2"> 3 </strong>
+
+              <span>giây</span>
+            </div>
+
+            <div class="timing-row">
+              <span>🔴 Đỏ</span>
+
+              <strong id="red2"> 18 </strong>
+
+              <span>giây</span>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- ============================= -->
+      <!-- CHẾ ĐỘ AUTO / MANUAL -->
+      <!-- ============================= -->
+
+      <section class="section">
+        <h2>⚙️ CHẾ ĐỘ ĐIỀU KHIỂN</h2>
+
+        <div class="mode-grid">
+          <button id="autoButton" class="mode-button auto-button">
+            🤖 AUTO
+          </button>
+
+          <button id="manualButton" class="mode-button manual-button">
+            🖐️ MANUAL
+          </button>
+        </div>
+
+        <div id="controlStatus" class="control-status">
+          Chế độ hiện tại:
+          <strong>AUTO</strong>
+        </div>
+      </section>
+
+      <!-- ============================= -->
+      <!-- NHẬP THỜI GIAN MANUAL -->
+      <!-- ============================= -->
+
+      <section class="section">
+        <div id="manualPanel" class="manual-panel manual-disabled">
+          <h2>🛠️ CÀI ĐẶT THỜI GIAN MANUAL</h2>
+
+          <p class="manual-description">
+            Chọn chế độ <strong>MANUAL</strong> để nhập thời gian đèn thủ công.
+          </p>
+
+          <div class="manual-phase-grid">
+            <!-- ================= -->
+            <!-- NHÓM 1 -->
+            <!-- ================= -->
+
+            <div class="manual-card">
+              <h3>
+                Nhóm 1
+                <span class="direction-text"> (Hướng 1 + Hướng 3) </span>
+              </h3>
+
+              <label for="manualGreen1"> 🟢 Xanh 1 </label>
+
+              <input
+                type="number"
+                id="manualGreen1"
+                min="1"
+                max="999"
+                value="15"
+                disabled
+              />
+
+              <label for="manualYellow1"> 🟡 Vàng 1 </label>
+
+              <input
+                type="number"
+                id="manualYellow1"
+                min="1"
+                max="999"
+                value="3"
+                disabled
+              />
+
+              <label for="manualRed1"> 🔴 Đỏ 1 </label>
+
+              <input
+                type="number"
+                id="manualRed1"
+                value="18"
+                disabled
+                readonly
+              />
+
+              <div class="calculation-box">
+                <span> Đỏ 1 = </span>
+
+                <strong id="calculationRed1"> Xanh 2 + Vàng 2 </strong>
+              </div>
+            </div>
+
+            <!-- ================= -->
+            <!-- NHÓM 2 -->
+            <!-- ================= -->
+
+            <div class="manual-card">
+              <h3>
+                Nhóm 2
+                <span class="direction-text"> (Hướng 2 + Hướng 4) </span>
+              </h3>
+
+              <label for="manualGreen2"> 🟢 Xanh 2 </label>
+
+              <input
+                type="number"
+                id="manualGreen2"
+                min="1"
+                max="999"
+                value="15"
+                disabled
+              />
+
+              <label for="manualYellow2"> 🟡 Vàng 2 </label>
+
+              <input
+                type="number"
+                id="manualYellow2"
+                min="1"
+                max="999"
+                value="3"
+                disabled
+              />
+
+              <label for="manualRed2"> 🔴 Đỏ 2 </label>
+
+              <input
+                type="number"
+                id="manualRed2"
+                value="18"
+                disabled
+                readonly
+              />
+
+              <div class="calculation-box">
+                <span> Đỏ 2 = </span>
+
+                <strong id="calculationRed2"> Xanh 1 + Vàng 1 </strong>
+              </div>
+            </div>
+          </div>
+
+          <!-- ============================= -->
+          <!-- NÚT GỬI -->
+          <!-- ============================= -->
+
+          <div class="manual-send-area">
+            <button id="sendManualTime" class="send-button" disabled>
+              📤 GỬI THỜI GIAN MANUAL
+            </button>
+          </div>
+
+          <!-- ============================= -->
+          <!-- TRẠNG THÁI -->
+          <!-- ============================= -->
+
+          <div id="manualTimeStatus" class="manual-time-status">
+            Chưa có thời gian manual được gửi.
+          </div>
+        </div>
+      </section>
+
+      <!-- ============================= -->
+      <!-- BIỂU ĐỒ -->
+      <!-- ============================= -->
+
+      <section class="section">
+        <h2>📊 BIỂU ĐỒ MẬT ĐỘ PHƯƠNG TIỆN</h2>
+
+        <!-- BIỂU ĐỒ HIỆN TẠI -->
+
+        <div class="chart-card">
+          <h3>Mật độ phương tiện hiện tại</h3>
+
+          <div class="chart-container">
+            <canvas id="vehicleChart"></canvas>
+          </div>
+        </div>
+
+        <!-- BIỂU ĐỒ LỊCH SỬ -->
+
+        <div class="chart-card">
+          <h3>Lịch sử phương tiện</h3>
+
+          <div class="chart-container">
+            <canvas id="historyChart"></canvas>
+          </div>
+        </div>
+      </section>
+
+      <!-- ============================= -->
+      <!-- THÔNG TIN HỆ THỐNG -->
+      <!-- ============================= -->
+
+      <section class="section system-info">
+        <h2>📡 THÔNG TIN HỆ THỐNG</h2>
+
+        <div class="info-grid">
+          <div>
+            <strong>Camera:</strong>
+            OpenCV + YOLO + ByteTrack
+          </div>
+
+          <div>
+            <strong>Điều khiển:</strong>
+            ESP32
+          </div>
+
+          <div>
+            <strong>Giao tiếp:</strong>
+            MQTT
+          </div>
+
+          <div>
+            <strong>Broker:</strong>
+            HiveMQ Cloud
+          </div>
+        </div>
+      </section>
+    </div>
+
+    <!-- ====================================== -->
+    <!-- CHART.JS -->
+    <!-- ====================================== -->
+
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
+    <!-- ====================================== -->
+    <!-- JAVASCRIPT CỦA CHƯƠNG TRÌNH -->
+    <!-- ====================================== -->
+
+    <script src="{{ url_for('static', filename='script.js') }}"></script>
+  </body>
+</html>

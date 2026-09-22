@@ -1,0 +1,796 @@
+/* =========================================================
+   CÀI ĐẶT CHUNG
+   ========================================================= */
+
+* {
+  box-sizing: border-box;
+}
+
+body {
+  margin: 0;
+  padding: 0;
+
+  font-family: Arial, Helvetica, sans-serif;
+
+  background: #f4f6f8;
+  color: #222;
+}
+
+/* =========================================================
+   CONTAINER
+   ========================================================= */
+
+.container {
+  width: 95%;
+  max-width: 1400px;
+
+  margin: 0 auto;
+  padding: 20px 0 40px;
+}
+
+/* =========================================================
+   HEADER
+   ========================================================= */
+
+.header {
+  text-align: center;
+
+  background: white;
+
+  padding: 25px 20px;
+
+  margin-bottom: 20px;
+
+  border-radius: 12px;
+
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+}
+
+.header h1 {
+  margin: 0 0 10px;
+
+  font-size: 30px;
+
+  color: #1f2937;
+}
+
+.header p {
+  margin: 0;
+
+  color: #666;
+
+  font-size: 16px;
+}
+
+/* =========================================================
+   SECTION
+   ========================================================= */
+
+.section {
+  background: white;
+
+  margin-bottom: 20px;
+
+  padding: 20px;
+
+  border-radius: 12px;
+
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+}
+
+.section h2 {
+  margin-top: 0;
+  margin-bottom: 20px;
+
+  font-size: 22px;
+
+  color: #1f2937;
+
+  border-bottom: 2px solid #e5e7eb;
+
+  padding-bottom: 10px;
+}
+
+/* =========================================================
+   VIDEO
+   ========================================================= */
+
+.video-container {
+  width: 100%;
+
+  background: #111;
+
+  border-radius: 10px;
+
+  overflow: hidden;
+}
+
+.video-container video {
+  display: block;
+
+  width: 100%;
+
+  max-height: 600px;
+
+  object-fit: contain;
+
+  background: #111;
+}
+
+.video-status {
+  margin: 12px 0 0;
+
+  color: #666;
+
+  font-size: 14px;
+}
+
+/* =========================================================
+   4 HƯỚNG XE
+   ========================================================= */
+
+.vehicle-grid {
+  display: grid;
+
+  grid-template-columns: repeat(4, 1fr);
+
+  gap: 15px;
+}
+
+.vehicle-card {
+  text-align: center;
+
+  padding: 20px;
+
+  background: #f8fafc;
+
+  border: 1px solid #e5e7eb;
+
+  border-radius: 10px;
+}
+
+.vehicle-card h3 {
+  margin: 0 0 10px;
+
+  font-size: 19px;
+
+  color: #374151;
+}
+
+.vehicle-number {
+  font-size: 42px;
+
+  font-weight: bold;
+
+  color: #2563eb;
+
+  line-height: 1.2;
+}
+
+.vehicle-card p {
+  margin: 5px 0 0;
+
+  color: #666;
+}
+
+/* =========================================================
+   TRẠNG THÁI ĐÈN
+   ========================================================= */
+
+.traffic-grid {
+  display: grid;
+
+  grid-template-columns: repeat(2, 1fr);
+
+  gap: 20px;
+}
+
+.traffic-card {
+  text-align: center;
+
+  padding: 25px;
+
+  background: #f8fafc;
+
+  border: 1px solid #e5e7eb;
+
+  border-radius: 10px;
+}
+
+.traffic-card h3 {
+  margin: 0 0 20px;
+
+  font-size: 21px;
+}
+
+.direction-text {
+  display: block;
+
+  margin-top: 5px;
+
+  font-size: 14px;
+
+  font-weight: normal;
+
+  color: #6b7280;
+}
+
+.light-status {
+  display: inline-block;
+
+  min-width: 150px;
+
+  padding: 12px 25px;
+
+  margin-bottom: 15px;
+
+  border-radius: 30px;
+
+  font-size: 22px;
+
+  font-weight: bold;
+
+  color: white;
+
+  background: #6b7280;
+}
+
+.light-green {
+  background: #16a34a !important;
+
+  color: white;
+}
+
+.light-yellow {
+  background: #eab308 !important;
+
+  color: #111;
+}
+
+.light-red {
+  background: #dc2626 !important;
+
+  color: white;
+}
+
+.traffic-time {
+  font-size: 17px;
+
+  color: #555;
+}
+
+.traffic-time strong {
+  font-size: 28px;
+
+  color: #111;
+}
+
+/* =========================================================
+   THỜI GIAN ĐÈN
+   ========================================================= */
+
+.timing-grid {
+  display: grid;
+
+  grid-template-columns: repeat(2, 1fr);
+
+  gap: 20px;
+}
+
+.timing-card {
+  padding: 20px;
+
+  background: #f8fafc;
+
+  border: 1px solid #e5e7eb;
+
+  border-radius: 10px;
+}
+
+.timing-card h3 {
+  margin-top: 0;
+
+  text-align: center;
+
+  font-size: 20px;
+}
+
+.timing-row {
+  display: flex;
+
+  justify-content: space-between;
+
+  align-items: center;
+
+  padding: 12px 5px;
+
+  border-bottom: 1px solid #e5e7eb;
+
+  font-size: 16px;
+}
+
+.timing-row:last-child {
+  border-bottom: none;
+}
+
+.timing-row strong {
+  font-size: 24px;
+}
+
+/* =========================================================
+   AUTO / MANUAL
+   ========================================================= */
+
+.mode-grid {
+  display: grid;
+
+  grid-template-columns: repeat(2, 1fr);
+
+  gap: 20px;
+
+  margin-bottom: 15px;
+}
+
+.mode-button {
+  border: none;
+
+  border-radius: 10px;
+
+  padding: 18px;
+
+  font-size: 18px;
+
+  font-weight: bold;
+
+  cursor: pointer;
+
+  transition: 0.2s ease;
+}
+
+.auto-button {
+  background: #dbeafe;
+
+  color: #1d4ed8;
+}
+
+.manual-button {
+  background: #ffedd5;
+
+  color: #c2410c;
+}
+
+.mode-button:hover {
+  transform: translateY(-2px);
+
+  box-shadow: 0 4px 10px rgba(0, 0, 0, 0.12);
+}
+
+.mode-button.active-mode {
+  color: white;
+
+  box-shadow: 0 3px 8px rgba(0, 0, 0, 0.18);
+}
+
+.auto-button.active-mode {
+  background: #2563eb;
+}
+
+.manual-button.active-mode {
+  background: #ea580c;
+}
+
+.control-status {
+  text-align: center;
+
+  padding: 12px;
+
+  border-radius: 8px;
+
+  background: #f3f4f6;
+
+  color: #555;
+
+  font-size: 16px;
+}
+
+.control-status strong {
+  color: #111;
+}
+
+/* =========================================================
+   PANEL MANUAL
+   ========================================================= */
+
+.manual-panel {
+  border-radius: 12px;
+
+  padding: 20px;
+
+  border: 2px solid #e5e7eb;
+
+  transition:
+    opacity 0.25s ease,
+    filter 0.25s ease,
+    border-color 0.25s ease,
+    box-shadow 0.25s ease;
+}
+
+.manual-panel h2 {
+  border-bottom: none;
+
+  margin-bottom: 5px;
+}
+
+.manual-description {
+  margin-top: 0;
+
+  color: #666;
+}
+
+/* ---------------------------------------------------------
+   MANUAL BỊ KHÓA KHI AUTO
+   --------------------------------------------------------- */
+
+.manual-disabled {
+  opacity: 0.45;
+
+  filter: grayscale(0.7);
+
+  pointer-events: none;
+
+  background: #f3f4f6;
+}
+
+/* ---------------------------------------------------------
+   MANUAL ĐƯỢC KÍCH HOẠT
+   --------------------------------------------------------- */
+
+.manual-enabled {
+  opacity: 1;
+
+  filter: none;
+
+  pointer-events: auto;
+
+  border-color: #f97316;
+
+  box-shadow: 0 0 0 3px rgba(249, 115, 22, 0.08);
+}
+
+/* =========================================================
+   2 NHÓM MANUAL
+   ========================================================= */
+
+.manual-phase-grid {
+  display: grid;
+
+  grid-template-columns: repeat(2, 1fr);
+
+  gap: 20px;
+}
+
+.manual-card {
+  padding: 20px;
+
+  background: #f8fafc;
+
+  border: 1px solid #e5e7eb;
+
+  border-radius: 10px;
+}
+
+.manual-card h3 {
+  margin-top: 0;
+
+  margin-bottom: 20px;
+
+  text-align: center;
+
+  font-size: 20px;
+}
+
+.manual-card label {
+  display: block;
+
+  margin-top: 12px;
+
+  margin-bottom: 6px;
+
+  font-weight: bold;
+
+  color: #374151;
+}
+
+.manual-card input {
+  width: 100%;
+
+  padding: 11px;
+
+  border: 1px solid #d1d5db;
+
+  border-radius: 7px;
+
+  font-size: 16px;
+
+  outline: none;
+
+  background: white;
+}
+
+.manual-card input:focus {
+  border-color: #2563eb;
+
+  box-shadow: 0 0 0 2px rgba(37, 99, 235, 0.1);
+}
+
+/* =========================================================
+   INPUT BỊ DISABLED
+   ========================================================= */
+
+.manual-card input:disabled {
+  background: #e5e7eb;
+
+  color: #777;
+
+  cursor: not-allowed;
+}
+
+/* =========================================================
+   Ô TÍNH TOÁN
+   ========================================================= */
+
+.calculation-box {
+  margin-top: 15px;
+
+  padding: 12px;
+
+  background: #eef2ff;
+
+  border-radius: 8px;
+
+  text-align: center;
+
+  color: #374151;
+
+  font-size: 14px;
+}
+
+.calculation-box strong {
+  display: block;
+
+  margin-top: 5px;
+
+  color: #1d4ed8;
+
+  font-size: 16px;
+}
+
+/* =========================================================
+   NÚT GỬI MANUAL
+   ========================================================= */
+
+.manual-send-area {
+  text-align: center;
+
+  margin-top: 20px;
+}
+
+.send-button {
+  border: none;
+
+  border-radius: 8px;
+
+  padding: 14px 25px;
+
+  background: #ea580c;
+
+  color: white;
+
+  font-size: 17px;
+
+  font-weight: bold;
+
+  cursor: pointer;
+
+  transition: 0.2s ease;
+}
+
+.send-button:hover:not(:disabled) {
+  background: #c2410c;
+
+  transform: translateY(-1px);
+}
+
+.send-button:disabled {
+  background: #9ca3af;
+
+  color: #e5e7eb;
+
+  cursor: not-allowed;
+
+  transform: none;
+}
+
+/* =========================================================
+   TRẠNG THÁI GỬI MANUAL
+   ========================================================= */
+
+.manual-time-status {
+  margin-top: 15px;
+
+  padding: 12px;
+
+  text-align: center;
+
+  background: #f3f4f6;
+
+  border-radius: 8px;
+
+  color: #555;
+
+  min-height: 20px;
+}
+
+/* =========================================================
+   BIỂU ĐỒ
+   ========================================================= */
+
+.chart-card {
+  margin-bottom: 25px;
+
+  padding: 20px;
+
+  background: #f8fafc;
+
+  border: 1px solid #e5e7eb;
+
+  border-radius: 10px;
+}
+
+.chart-card:last-child {
+  margin-bottom: 0;
+}
+
+.chart-card h3 {
+  margin-top: 0;
+
+  margin-bottom: 15px;
+
+  text-align: center;
+
+  font-size: 18px;
+
+  color: #374151;
+}
+
+.chart-container {
+  position: relative;
+
+  width: 100%;
+
+  height: 320px;
+}
+
+.chart-container canvas {
+  width: 100% !important;
+
+  height: 100% !important;
+}
+
+/* =========================================================
+   THÔNG TIN HỆ THỐNG
+   ========================================================= */
+
+.system-info {
+  margin-bottom: 0;
+}
+
+.info-grid {
+  display: grid;
+
+  grid-template-columns: repeat(2, 1fr);
+
+  gap: 12px;
+}
+
+.info-grid > div {
+  padding: 14px;
+
+  background: #f8fafc;
+
+  border-radius: 8px;
+
+  border: 1px solid #e5e7eb;
+
+  color: #555;
+}
+
+.info-grid strong {
+  color: #111;
+}
+
+/* =========================================================
+   RESPONSIVE TABLET
+   ========================================================= */
+
+@media (max-width: 900px) {
+  .vehicle-grid {
+    grid-template-columns: repeat(2, 1fr);
+  }
+
+  .traffic-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .timing-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .manual-phase-grid {
+    grid-template-columns: 1fr;
+  }
+}
+
+/* =========================================================
+   RESPONSIVE ĐIỆN THOẠI
+   ========================================================= */
+
+@media (max-width: 600px) {
+  .container {
+    width: 94%;
+
+    padding-top: 10px;
+  }
+
+  .section {
+    padding: 15px;
+  }
+
+  .header {
+    padding: 20px 15px;
+  }
+
+  .header h1 {
+    font-size: 22px;
+  }
+
+  .header p {
+    font-size: 14px;
+  }
+
+  .section h2 {
+    font-size: 19px;
+  }
+
+  .vehicle-grid {
+    grid-template-columns: 1fr 1fr;
+
+    gap: 10px;
+  }
+
+  .vehicle-card {
+    padding: 15px 10px;
+  }
+
+  .vehicle-number {
+    font-size: 32px;
+  }
+
+  .mode-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .info-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .chart-container {
+    height: 250px;
+  }
+
+  .light-status {
+    min-width: 120px;
+
+    font-size: 19px;
+  }
+}

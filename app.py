@@ -3,7 +3,7 @@ import paho.mqtt.client as mqtt
 import ssl
 import threading
 from datetime import datetime
-
+import os
 app = Flask(__name__)
 
 
@@ -11,20 +11,15 @@ app = Flask(__name__)
 # MQTT
 # =========================================================
 
-MQTT_BROKER = "2111815ca2934f5bba664229abfd106b.s1.eu.hivemq.cloud"
-MQTT_PORT = 8883
-
-MQTT_USERNAME = "web_test"
-
-# =========================================================
-# ĐIỀN MẬT KHẨU HIVEMQ CỦA BẠN Ở ĐÂY
-# =========================================================
-
-MQTT_PASSWORD = "12345678"
 
 
-TOPIC_STATUS = "traffic/status"
-TOPIC_CONTROL = "traffic/control"
+MQTT_BROKER = os.environ.get("MQTT_BROKER")
+MQTT_PORT = int(os.environ.get("MQTT_PORT", 8883))
+MQTT_USERNAME = os.environ.get("MQTT_USERNAME")
+MQTT_PASSWORD = os.environ.get("MQTT_PASSWORD")
+
+TOPIC_STATUS = os.environ.get("TOPIC_STATUS", "traffic/status")
+TOPIC_CONTROL = os.environ.get("TOPIC_CONTROL", "traffic/control")
 
 
 # =========================================================

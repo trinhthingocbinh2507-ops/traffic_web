@@ -445,7 +445,34 @@ def api_control():
             "message": str(e)
         }), 500
 
+@app.route("/test-mqtt")
+def test_mqtt():
 
+    try:
+        import socket
+
+        sock = socket.create_connection(
+            (MQTT_BROKER, MQTT_PORT),
+            10
+        )
+
+        sock.close()
+
+        return jsonify({
+            "success": True,
+            "message": "Render ket noi duoc den MQTT broker",
+            "broker": MQTT_BROKER,
+            "port": MQTT_PORT
+        })
+
+    except Exception as e:
+
+        return jsonify({
+            "success": False,
+            "message": str(e),
+            "broker": MQTT_BROKER,
+            "port": MQTT_PORT
+        }), 500
 # =========================================================
 # MAIN
 # =========================================================

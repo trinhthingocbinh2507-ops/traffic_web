@@ -21,7 +21,15 @@ MQTT_PASSWORD = os.environ.get("MQTT_PASSWORD")
 TOPIC_STATUS = os.environ.get("TOPIC_STATUS", "traffic/status")
 TOPIC_CONTROL = os.environ.get("TOPIC_CONTROL", "traffic/control")
 
+# Kiểm tra cấu hình MQTT
+if not MQTT_BROKER:
+    raise ValueError("THIEU MQTT_BROKER")
 
+if not MQTT_USERNAME:
+    raise ValueError("THIEU MQTT_USERNAME")
+
+if not MQTT_PASSWORD:
+    raise ValueError("THIEU MQTT_PASSWORD")
 # =========================================================
 # DỮ LIỆU HIỆN TẠI
 # =========================================================

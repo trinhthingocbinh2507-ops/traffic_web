@@ -1,17 +1,16 @@
 from flask import Flask, render_template, jsonify, request
 import paho.mqtt.client as mqtt
 import ssl
-import threading
 from datetime import datetime
 import os
+import threading
+
 app = Flask(__name__)
 
 
 # =========================================================
 # MQTT
 # =========================================================
-
-
 
 MQTT_BROKER = os.environ.get("MQTT_BROKER")
 MQTT_PORT = int(os.environ.get("MQTT_PORT", 8883))
@@ -49,7 +48,6 @@ status_data = {
 
 vehicle_history = []
 
-# Số lượng mẫu tối đa lưu trong RAM
 MAX_HISTORY = 120
 
 
@@ -74,8 +72,6 @@ def luu_lich_su():
 
         vehicle_history.append(item)
 
-        # Nếu vượt quá số lượng cho phép
-        # thì xóa dữ liệu cũ nhất
         if len(vehicle_history) > MAX_HISTORY:
             vehicle_history.pop(0)
 
@@ -90,11 +86,26 @@ def luu_lich_su():
 
 def on_connect(client, userdata, flags, reason_code, properties):
 
-    print("MQTT: DA KET NOI")
+    print("MQTT CALLBACK")
+    print("REASON CODE:", reason_code)
 
-    client.subscribe(TOPIC_STATUS)
+    if reason_code == 0:
 
-    print("MQTT: DA SUBSCRIBE", TOPIC_STATUS)
+        print("MQTT: DA KET NOI")
+        print("BROKER:", MQTT_BROKER)
+        print("PORT:", MQTT_PORT)
+
+        result = client.subscribe(TOPIC_STATUS)
+
+        if result[0] == mqtt.MQTT_ERR_SUCCESS:
+            print("MQTT: DA SUBSCRIBE", TOPIC_STATUS)
+        else:
+            print("MQTT: LOI SUBSCRIBE")
+
+
+    else:
+
+        print("MQTT: KET NOI THAT BAI")
 
 
 # =========================================================
@@ -113,13 +124,6 @@ def on_message(client, userdata, msg):
 
         data = payload.split(",")
 
-        # =================================================
-        # ESP32 gửi:
-        #
-        # H1,H2,H3,H4,PHASE,TIME,
-        # XANH1,VANG1,XANH2,VANG2
-        # =================================================
-
         if len(data) >= 10:
 
             status_data["h1"] = int(data[0])
@@ -137,7 +141,6 @@ def on_message(client, userdata, msg):
             status_data["xanh2"] = int(data[8])
             status_data["vang2"] = int(data[9])
 
-            # Lưu lại lịch sử
             luu_lich_su()
 
     except Exception as e:
@@ -149,9 +152,12 @@ def on_message(client, userdata, msg):
 # TẠO MQTT CLIENT
 # =========================================================
 
+# Dùng client_id riêng cho Render
+CLIENT_ID = "flask_web_render"
+
 mqtt_client = mqtt.Client(
     mqtt.CallbackAPIVersion.VERSION2,
-    client_id="flask_web"
+    client_id=CLIENT_ID
 )
 
 
@@ -192,7 +198,11 @@ def ket_noi_mqtt():
         print("MQTT: KHONG KET NOI DUOC")
         print("LOI:", e)
 
+
+# Kết nối ngay khi Render khởi động Flask
 ket_noi_mqtt()
+
+
 # =========================================================
 # TRANG CHỦ
 # =========================================================
@@ -204,7 +214,7 @@ def home():
 
 
 # =========================================================
-# API: WEBSITE LẤY TRẠNG THÁI HIỆN TẠI
+# API: WEBSITE LẤY TRẠNG THÁI
 # =========================================================
 
 @app.route("/api/status")
@@ -214,7 +224,7 @@ def api_status():
 
 
 # =========================================================
-# API: WEBSITE LẤY LỊCH SỬ SỐ XE
+# API: WEBSITE LẤY LỊCH SỬ
 # =========================================================
 
 @app.route("/api/history")
@@ -244,15 +254,21 @@ def api_control():
             }), 400
 
 
+        print("WEB GUI LENH:", command)
+
+
         result = mqtt_client.publish(
             TOPIC_CONTROL,
             command
         )
 
 
+        print("MQTT PUBLISH RC:", result.rc)
+
+
         if result.rc == mqtt.MQTT_ERR_SUCCESS:
 
-            print("GUI LENH:", command)
+            print("MQTT: DA PUBLISH", command)
 
             return jsonify({
                 "success": True,
@@ -262,6 +278,8 @@ def api_control():
 
         else:
 
+            print("MQTT: PUBLISH THAT BAI")
+
             return jsonify({
                 "success": False,
                 "message": "MQTT publish loi"
@@ -269,6 +287,8 @@ def api_control():
 
 
     except Exception as e:
+
+        print("API CONTROL LOI:", e)
 
         return jsonify({
             "success": False,

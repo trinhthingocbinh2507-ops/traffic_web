@@ -3,6 +3,7 @@ import paho.mqtt.client as mqtt
 import ssl
 from datetime import datetime
 import os
+import time
 import threading
 
 app = Flask(__name__)
@@ -52,6 +53,13 @@ MAX_HISTORY = 120
 
 
 # =========================================================
+# TRẠNG THÁI MQTT
+# =========================================================
+
+mqtt_connected = False
+
+
+# =========================================================
 # HÀM LƯU LỊCH SỬ
 # =========================================================
 
@@ -81,35 +89,65 @@ def luu_lich_su():
 
 
 # =========================================================
-# MQTT CALLBACK
+# MQTT CALLBACK: CONNECT
 # =========================================================
 
 def on_connect(client, userdata, flags, reason_code, properties):
 
+    global mqtt_connected
+
+    print()
+    print("========================================")
     print("MQTT CALLBACK")
     print("REASON CODE:", reason_code)
+    print("========================================")
 
     if reason_code == 0:
+
+        mqtt_connected = True
 
         print("MQTT: DA KET NOI")
         print("BROKER:", MQTT_BROKER)
         print("PORT:", MQTT_PORT)
 
-        result = client.subscribe(TOPIC_STATUS)
+        result, mid = client.subscribe(TOPIC_STATUS)
 
-        if result[0] == mqtt.MQTT_ERR_SUCCESS:
+        if result == mqtt.MQTT_ERR_SUCCESS:
+
             print("MQTT: DA SUBSCRIBE", TOPIC_STATUS)
-        else:
-            print("MQTT: LOI SUBSCRIBE")
 
+        else:
+
+            print("MQTT: LOI SUBSCRIBE")
+            print("MA LOI:", result)
 
     else:
 
+        mqtt_connected = False
+
         print("MQTT: KET NOI THAT BAI")
+        print("REASON CODE:", reason_code)
 
 
 # =========================================================
-# NHẬN DỮ LIỆU TỪ ESP32
+# MQTT CALLBACK: DISCONNECT
+# =========================================================
+
+def on_disconnect(client, userdata, disconnect_flags, reason_code, properties):
+
+    global mqtt_connected
+
+    mqtt_connected = False
+
+    print()
+    print("========================================")
+    print("MQTT: DA NGAT KET NOI")
+    print("REASON CODE:", reason_code)
+    print("========================================")
+
+
+# =========================================================
+# MQTT CALLBACK: MESSAGE
 # =========================================================
 
 def on_message(client, userdata, msg):
@@ -123,6 +161,11 @@ def on_message(client, userdata, msg):
         print("MQTT STATUS:", payload)
 
         data = payload.split(",")
+
+        # ESP32 gửi:
+        #
+        # H1,H2,H3,H4,PHASE,TIME,
+        # XANH1,VANG1,XANH2,VANG2
 
         if len(data) >= 10:
 
@@ -152,8 +195,21 @@ def on_message(client, userdata, msg):
 # TẠO MQTT CLIENT
 # =========================================================
 
-# Dùng client_id riêng cho Render
-CLIENT_ID = "flask_web_render"
+# Dùng client ID riêng.
+# Điều này tránh trường hợp app local và Render
+# cùng sử dụng client_id = "flask_web".
+
+CLIENT_ID = f"flask_web_{os.getpid()}"
+
+print("========================================")
+print("KHOI TAO MQTT")
+print("========================================")
+print("MQTT BROKER:", MQTT_BROKER)
+print("MQTT PORT:", MQTT_PORT)
+print("MQTT USER:", MQTT_USERNAME)
+print("MQTT CLIENT ID:", CLIENT_ID)
+print("========================================")
+
 
 mqtt_client = mqtt.Client(
     mqtt.CallbackAPIVersion.VERSION2,
@@ -161,15 +217,23 @@ mqtt_client = mqtt.Client(
 )
 
 
+# Tài khoản HiveMQ
 mqtt_client.username_pw_set(
     MQTT_USERNAME,
     MQTT_PASSWORD
 )
 
 
+# TLS cho port 8883
 mqtt_client.tls_set(
     tls_version=ssl.PROTOCOL_TLS_CLIENT
 )
+
+
+# Gắn callback
+mqtt_client.on_connect = on_connect
+mqtt_client.on_disconnect = on_disconnect
+mqtt_client.on_message = on_message
 
 
 # =========================================================
@@ -178,10 +242,16 @@ mqtt_client.tls_set(
 
 def ket_noi_mqtt():
 
+    global mqtt_connected
+
     try:
 
-        mqtt_client.on_connect = on_connect
-        mqtt_client.on_message = on_message
+        print()
+        print("========================================")
+        print("MQTT: DANG KHOI DONG...")
+        print("========================================")
+
+        print("MQTT: DANG CONNECT TO HIVEMQ...")
 
         mqtt_client.connect(
             MQTT_BROKER,
@@ -189,17 +259,57 @@ def ket_noi_mqtt():
             60
         )
 
+        print("MQTT: CONNECT OK")
+
+        # Bắt đầu vòng lặp MQTT
         mqtt_client.loop_start()
 
-        print("MQTT: DANG KHOI DONG...")
+        print("MQTT: LOOP DA KHOI DONG")
+
+        # Chờ callback on_connect
+        for i in range(10):
+
+            if mqtt_connected:
+
+                break
+
+            print(
+                "MQTT: DANG CHO CONNECT...",
+                i + 1,
+                "/ 10"
+            )
+
+            time.sleep(1)
+
+        print()
+
+        if mqtt_connected:
+
+            print("========================================")
+            print("MQTT: KET NOI THANH CONG")
+            print("========================================")
+
+        else:
+
+            print("========================================")
+            print("MQTT: CHUA NHAN DUOC CONNECT CALLBACK")
+            print("========================================")
 
     except Exception as e:
 
+        mqtt_connected = False
+
+        print()
+        print("========================================")
         print("MQTT: KHONG KET NOI DUOC")
-        print("LOI:", e)
+        print("========================================")
+
+        print("LOI:", repr(e))
+
+        print("========================================")
 
 
-# Kết nối ngay khi Render khởi động Flask
+# Kết nối MQTT khi Flask khởi động
 ket_noi_mqtt()
 
 
@@ -214,7 +324,7 @@ def home():
 
 
 # =========================================================
-# API: WEBSITE LẤY TRẠNG THÁI
+# API: WEBSITE LẤY TRẠNG THÁI HIỆN TẠI
 # =========================================================
 
 @app.route("/api/status")
@@ -224,7 +334,7 @@ def api_status():
 
 
 # =========================================================
-# API: WEBSITE LẤY LỊCH SỬ
+# API: WEBSITE LẤY LỊCH SỬ SỐ XE
 # =========================================================
 
 @app.route("/api/history")
@@ -253,42 +363,76 @@ def api_control():
                 "message": "Thieu command"
             }), 400
 
-
+        print()
+        print("========================================")
         print("WEB GUI LENH:", command)
+        print("MQTT CONNECTED:", mqtt_connected)
+        print("========================================")
 
+        # -------------------------------------------------
+        # Kiểm tra MQTT
+        # -------------------------------------------------
+
+        if not mqtt_connected:
+
+            print("MQTT: HIEN TAI KHONG KET NOI")
+
+            return jsonify({
+                "success": False,
+                "message": "MQTT chua ket noi"
+            }), 503
+
+        # -------------------------------------------------
+        # Gửi lệnh
+        # -------------------------------------------------
 
         result = mqtt_client.publish(
             TOPIC_CONTROL,
-            command
+            command,
+            qos=1
         )
-
 
         print("MQTT PUBLISH RC:", result.rc)
 
+        if result.rc != mqtt.MQTT_ERR_SUCCESS:
 
-        if result.rc == mqtt.MQTT_ERR_SUCCESS:
-
-            print("MQTT: DA PUBLISH", command)
-
-            return jsonify({
-                "success": True,
-                "command": command
-            })
-
-
-        else:
-
-            print("MQTT: PUBLISH THAT BAI")
+            print("MQTT: PUBLISH LOI")
 
             return jsonify({
                 "success": False,
                 "message": "MQTT publish loi"
             }), 500
 
+        # Chờ MQTT xác nhận publish
+        result.wait_for_publish(timeout=5)
+
+        if result.is_published():
+
+            print("MQTT: DA PUBLISH")
+            print("TOPIC:", TOPIC_CONTROL)
+            print("DATA:", command)
+
+            return jsonify({
+                "success": True,
+                "command": command
+            })
+
+        else:
+
+            print("MQTT: CHUA XAC NHAN PUBLISH")
+
+            return jsonify({
+                "success": False,
+                "message": "MQTT chua xac nhan publish"
+            }), 500
 
     except Exception as e:
 
-        print("API CONTROL LOI:", e)
+        print()
+        print("========================================")
+        print("API CONTROL LOI")
+        print("LOI:", repr(e))
+        print("========================================")
 
         return jsonify({
             "success": False,

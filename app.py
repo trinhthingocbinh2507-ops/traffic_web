@@ -427,74 +427,63 @@ def api_control():
         if not data:
 
             return jsonify({
-
                 "success": False,
-
                 "message": "Khong co du lieu JSON"
-
             }), 400
 
 
-        command = data.get(
-            "command"
-        )
+        command = data.get("command")
 
 
         if not command:
 
             return jsonify({
-
                 "success": False,
-
                 "message": "Thieu command"
-
             }), 400
 
 
-        print(
-            "CHUAN BI GUI LENH:",
-            command
-        )
+        print("======================================")
+        print("CHUAN BI GUI MQTT")
+        print("TOPIC :", TOPIC_CONTROL)
+        print("COMMAND:", command)
+        print("CONNECTED:", mqtt_client.is_connected())
+        print("======================================")
 
 
         # =================================================
-        # GỬI MQTT
+        # KIỂM TRA MQTT CÓ ĐANG KẾT NỐI KHÔNG
+        # =================================================
+
+        if not mqtt_client.is_connected():
+
+            print("MQTT: CLIENT KHONG KET NOI")
+
+            return jsonify({
+                "success": False,
+                "message": "Flask chua ket noi MQTT broker"
+            }), 500
+
+
+        # =================================================
+        # PUBLISH
         # =================================================
 
         result = mqtt_client.publish(
-
             TOPIC_CONTROL,
-
             command,
-
-            qos=0,
-
+            qos=1,
             retain=False
-
         )
 
 
-        # =================================================
-        # KIỂM TRA KẾT QUẢ PUBLISH
-        # =================================================
-
-        if result.rc == mqtt.MQTT_ERR_SUCCESS:
-
-            print(
-                "GUI LENH:",
-                command
-            )
-
-            return jsonify({
-
-                "success": True,
-
-                "command": command
-
-            })
+        print(
+            "MQTT PUBLISH RC:",
+            result.rc
+        )
 
 
-        else:
+        if result.rc != mqtt.MQTT_ERR_SUCCESS:
 
             print(
                 "MQTT PUBLISH LOI:",
@@ -502,15 +491,55 @@ def api_control():
             )
 
             return jsonify({
-
                 "success": False,
-
-                "message": (
-                    "MQTT publish loi: "
-                    + str(result.rc)
-                )
-
+                "message": "MQTT publish loi",
+                "rc": result.rc
             }), 500
+
+
+        # =================================================
+        # CHỜ MESSAGE ĐƯỢC GỬI THỰC SỰ
+        # =================================================
+
+        result.wait_for_publish(
+            timeout=5
+        )
+
+
+        # =================================================
+        # KIỂM TRA ĐÃ PUBLISH XONG
+        # =================================================
+
+        if not result.is_published():
+
+            print(
+                "MQTT: KHONG XAC NHAN DUOC PUBLISH"
+            )
+
+            return jsonify({
+                "success": False,
+                "message": "MQTT chua xac nhan publish"
+            }), 500
+
+
+        # =================================================
+        # THÀNH CÔNG
+        # =================================================
+
+        print(
+            "GUI LENH THANH CONG:",
+            command
+        )
+
+        return jsonify({
+
+            "success": True,
+
+            "command": command,
+
+            "topic": TOPIC_CONTROL
+
+        })
 
 
     except Exception as e:

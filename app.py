@@ -199,7 +199,7 @@ def ket_noi_mqtt():
         print("MQTT: KHONG KET NOI DUOC")
         print("LOI:", repr(e))
 
-
+ket_noi_mqtt()
 # =========================================================
 # TRANG CHỦ
 # =========================================================
@@ -289,7 +289,7 @@ def api_control():
 
 if __name__ == "__main__":
 
-    ket_noi_mqtt()
+    
 
     app.run(
         host="0.0.0.0",

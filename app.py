@@ -159,7 +159,7 @@ def on_message(client, userdata, msg):
 
 mqtt_client = mqtt.Client(
     mqtt.CallbackAPIVersion.VERSION2,
-    client_id="flask_web"
+    client_id=f"traffic_web_{os.getpid()}"
 )
 
 

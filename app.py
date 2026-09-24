@@ -402,22 +402,18 @@ def api_status():
 # API HISTORY
 # =========================================================
 
-@app.route("/api/history")
-def api_history():
-
-    return jsonify(
-        vehicle_history
-    )
-
-
-# =========================================================
-# API CONTROL
-# =========================================================
-
 @app.route("/api/control", methods=["POST"])
 def api_control():
+
     try:
         data = request.get_json()
+
+        if not data:
+            return jsonify({
+                "success": False,
+                "message": "Khong co du lieu JSON"
+            }), 400
+
         command = data.get("command")
 
         if not command:
@@ -431,8 +427,11 @@ def api_control():
         print("CHUAN BI GUI LENH:", command)
         print("==============================")
 
+        # Kiểm tra trạng thái MQTT để theo dõi,
+        # nhưng KHÔNG chặn request nếu đang False
         print("MQTT CONNECTED:", mqtt_client.is_connected())
 
+        # Gửi lệnh MQTT
         result = mqtt_client.publish(
             TOPIC_CONTROL,
             command,
@@ -442,7 +441,9 @@ def api_control():
         print("PUBLISH RC:", result.rc)
         print("PUBLISH MID:", result.mid)
 
+        # Publish thất bại
         if result.rc != mqtt.MQTT_ERR_SUCCESS:
+
             print("MQTT PUBLISH LOI")
 
             return jsonify({
@@ -451,27 +452,17 @@ def api_control():
                 "rc": result.rc
             }), 500
 
-        try:
-            result.wait_for_publish(timeout=5)
+        # Paho đã chấp nhận publish.
+        # Không wait_for_publish() để tránh Web bị chậm.
+        print("MQTT: DA GUI LENH:", command)
 
-            print("MQTT: DA XAC NHAN PUBLISH")
-
-            return jsonify({
-                "success": True,
-                "command": command
-            })
-
-        except Exception as e:
-            print("MQTT: KHONG XAC NHAN DUOC PUBLISH")
-            print("LOI:", e)
-
-            return jsonify({
-                "success": False,
-                "message": "MQTT khong xac nhan publish",
-                "error": str(e)
-            }), 500
+        return jsonify({
+            "success": True,
+            "command": command
+        })
 
     except Exception as e:
+
         print("API CONTROL ERROR:", e)
 
         return jsonify({

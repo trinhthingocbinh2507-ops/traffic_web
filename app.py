@@ -1,10 +1,15 @@
 from flask import Flask, render_template, jsonify, request
+
 import paho.mqtt.client as mqtt
 import ssl
 import os
 import json
 import threading
+import time
+import uuid
+
 from datetime import datetime
+
 
 app = Flask(__name__)
 
@@ -46,7 +51,10 @@ TOPIC_CONTROL = os.environ.get(
 # FILE LƯU TRẠNG THÁI
 # =========================================================
 
-STATUS_FILE = "status_data.json"
+STATUS_FILE = os.path.join(
+    os.path.dirname(os.path.abspath(__file__)),
+    "status_data.json"
+)
 
 status_lock = threading.Lock()
 
@@ -56,6 +64,7 @@ status_lock = threading.Lock()
 # =========================================================
 
 DEFAULT_STATUS = {
+
     "h1": 0,
     "h2": 0,
     "h3": 0,
@@ -96,7 +105,10 @@ def doc_status():
 
         except Exception as e:
 
-            print("LOI DOC STATUS FILE:", e)
+            print(
+                "LOI DOC STATUS FILE:",
+                repr(e)
+            )
 
         return DEFAULT_STATUS.copy()
 
@@ -125,7 +137,10 @@ def luu_status(data):
 
         except Exception as e:
 
-            print("LOI LUU STATUS FILE:", e)
+            print(
+                "LOI LUU STATUS FILE:",
+                repr(e)
+            )
 
 
 # =========================================================
@@ -134,7 +149,9 @@ def luu_status(data):
 
 if not os.path.exists(STATUS_FILE):
 
-    luu_status(DEFAULT_STATUS.copy())
+    luu_status(
+        DEFAULT_STATUS.copy()
+    )
 
 
 # =========================================================
@@ -154,7 +171,9 @@ def luu_lich_su(status):
 
     try:
 
-        now = datetime.now().strftime("%H:%M:%S")
+        now = datetime.now().strftime(
+            "%H:%M:%S"
+        )
 
         item = {
 
@@ -175,7 +194,10 @@ def luu_lich_su(status):
 
     except Exception as e:
 
-        print("LOI LUU LICH SU:", e)
+        print(
+            "LOI LUU LICH SU:",
+            repr(e)
+        )
 
 
 # =========================================================
@@ -190,7 +212,10 @@ def on_connect(
     properties
 ):
 
+    print("================================")
     print("MQTT: DA KET NOI")
+    print("MQTT CONNECT REASON:", reason_code)
+    print("================================")
 
     result = client.subscribe(
         TOPIC_STATUS
@@ -207,8 +232,47 @@ def on_connect(
 
         print(
             "MQTT: LOI SUBSCRIBE",
-            TOPIC_STATUS
+            TOPIC_STATUS,
+            "RC:",
+            result[0]
         )
+
+
+# =========================================================
+# MQTT DISCONNECT
+# =========================================================
+
+def on_disconnect(
+    client,
+    userdata,
+    flags,
+    reason_code,
+    properties
+):
+
+    print("================================")
+    print("MQTT: DA NGAT KET NOI")
+    print("MQTT DISCONNECT REASON:", reason_code)
+    print("================================")
+
+
+# =========================================================
+# MQTT PUBLISH ACK
+# =========================================================
+
+def on_publish(
+    client,
+    userdata,
+    mid,
+    reason_code,
+    properties
+):
+
+    print("================================")
+    print("MQTT: BROKER DA XAC NHAN PUBLISH")
+    print("PUBLISH MID:", mid)
+    print("PUBLISH REASON:", reason_code)
+    print("================================")
 
 
 # =========================================================
@@ -281,7 +345,7 @@ def on_message(
 
         print(
             "MQTT: LOI DOC DU LIEU:",
-            e
+            repr(e)
         )
 
 
@@ -290,8 +354,15 @@ def on_message(
 # =========================================================
 
 mqtt_client = mqtt.Client(
+
     mqtt.CallbackAPIVersion.VERSION2,
-    client_id="flask_web"
+
+    client_id=(
+        "flask_web_"
+        + uuid.uuid4().hex[:8]
+    ),
+
+    protocol=mqtt.MQTTv311
 )
 
 
@@ -324,26 +395,25 @@ def ket_noi_mqtt():
 
         mqtt_client.on_connect = on_connect
 
+        mqtt_client.on_disconnect = on_disconnect
+
         mqtt_client.on_message = on_message
 
-        print(
-            "MQTT: BAT DAU KET NOI..."
-        )
+        mqtt_client.on_publish = on_publish
 
-        print(
-            "BROKER:",
-            MQTT_BROKER
-        )
 
+        print()
+        print("================================")
+        print("MQTT: BAT DAU KET NOI...")
+        print("BROKER:", MQTT_BROKER)
+        print("PORT:", MQTT_PORT)
+        print("USERNAME:", MQTT_USERNAME)
         print(
-            "PORT:",
-            MQTT_PORT
+            "CLIENT ID:",
+            mqtt_client._client_id.decode()
         )
+        print("================================")
 
-        print(
-            "USERNAME:",
-            MQTT_USERNAME
-        )
 
         mqtt_client.connect(
             MQTT_BROKER,
@@ -351,26 +421,80 @@ def ket_noi_mqtt():
             60
         )
 
+
         print(
             "MQTT: CONNECT() DA HOAN THANH"
         )
 
+
         mqtt_client.loop_start()
 
+
         print(
-            "MQTT: DANG KHOI DONG..."
+            "MQTT: DANG CHO XAC NHAN KET NOI..."
         )
+
+
+        # =================================================
+        # CHỜ MQTT CONNECT THỰC SỰ
+        # =================================================
+
+        for i in range(15):
+
+            if mqtt_client.is_connected():
+
+                print("================================")
+                print("MQTT: KET NOI THANH CONG")
+                print("MQTT CONNECTED = True")
+                print("================================")
+
+                return True
+
+
+            time.sleep(1)
+
+
+            print(
+                "MQTT: DANG CHO...",
+                i + 1,
+                "/ 15"
+            )
+
+
+        print("================================")
+        print("MQTT: KHONG KET NOI DUOC")
+        print(
+            "MQTT CONNECTED =",
+            mqtt_client.is_connected()
+        )
+        print("================================")
+
+
+        return False
+
 
     except Exception as e:
 
-        print(
-            "MQTT: KHONG KET NOI DUOC"
-        )
-
+        print("================================")
+        print("MQTT: LOI KET NOI")
         print(
             "LOI:",
-            e
+            repr(e)
         )
+        print("================================")
+
+        return False
+
+
+# =========================================================
+# KHỞI ĐỘNG MQTT
+#
+# QUAN TRỌNG:
+# Gọi ngoài if __name__ == "__main__"
+# để Gunicorn trên Render cũng kết nối MQTT.
+# =========================================================
+
+ket_noi_mqtt()
 
 
 # =========================================================
@@ -393,6 +517,8 @@ def home():
 def api_status():
 
     # ĐỌC TRỰC TIẾP STATUS MỚI NHẤT
+    # THEO CÁCH CỦA CODE CŨ
+
     status = doc_status()
 
     return jsonify(status)
@@ -424,13 +550,16 @@ def api_control():
 
         data = request.get_json()
 
+
         if not data:
 
             return jsonify({
 
                 "success": False,
 
-                "message": "Khong co du lieu JSON"
+                "message": (
+                    "Khong co du lieu JSON"
+                )
 
             }), 400
 
@@ -451,14 +580,27 @@ def api_control():
             }), 400
 
 
+        print()
+        print("==============================")
         print(
             "CHUAN BI GUI LENH:",
             command
         )
+        print("==============================")
 
 
         # =================================================
-        # GỬI MQTT
+        # KIỂM TRA MQTT
+        # =================================================
+
+        print(
+            "MQTT CONNECTED:",
+            mqtt_client.is_connected()
+        )
+
+
+        # =================================================
+        # GỬI LỆNH SANG ESP32
         # =================================================
 
         result = mqtt_client.publish(
@@ -467,10 +609,21 @@ def api_control():
 
             command,
 
-            qos=0,
+            qos=1,
 
             retain=False
 
+        )
+
+
+        print(
+            "PUBLISH RC:",
+            result.rc
+        )
+
+        print(
+            "PUBLISH MID:",
+            result.mid
         )
 
 
@@ -478,27 +631,10 @@ def api_control():
         # KIỂM TRA KẾT QUẢ PUBLISH
         # =================================================
 
-        if result.rc == mqtt.MQTT_ERR_SUCCESS:
+        if result.rc != mqtt.MQTT_ERR_SUCCESS:
 
             print(
-                "GUI LENH:",
-                command
-            )
-
-            return jsonify({
-
-                "success": True,
-
-                "command": command
-
-            })
-
-
-        else:
-
-            print(
-                "MQTT PUBLISH LOI:",
-                result.rc
+                "MQTT PUBLISH LOI"
             )
 
             return jsonify({
@@ -506,19 +642,36 @@ def api_control():
                 "success": False,
 
                 "message": (
-                    "MQTT publish loi: "
-                    + str(result.rc)
-                )
+                    "MQTT publish loi"
+                ),
+
+                "rc": result.rc
 
             }), 500
+
+
+        print(
+            "MQTT: DA GUI LENH:",
+            command
+        )
+
+
+        return jsonify({
+
+            "success": True,
+
+            "command": command
+
+        })
 
 
     except Exception as e:
 
         print(
-            "API CONTROL LOI:",
-            e
+            "API CONTROL ERROR:",
+            repr(e)
         )
+
 
         return jsonify({
 
@@ -527,17 +680,6 @@ def api_control():
             "message": str(e)
 
         }), 500
-
-
-# =========================================================
-# KHỞI ĐỘNG MQTT
-#
-# QUAN TRỌNG:
-# Gọi ở ngoài if __name__ == "__main__"
-# để Gunicorn trên Render cũng kết nối MQTT.
-# =========================================================
-
-ket_noi_mqtt()
 
 
 # =========================================================

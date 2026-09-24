@@ -165,11 +165,12 @@ def on_message(client, userdata, msg):
 # TẠO MQTT CLIENT
 # =========================================================
 
-import uuid
+
 
 mqtt_client = mqtt.Client(
     mqtt.CallbackAPIVersion.VERSION2,
     client_id="flask_web_" + uuid.uuid4().hex[:8]
+    
 )
 
 mqtt_client.username_pw_set(

@@ -4,7 +4,7 @@ import ssl
 import threading
 from datetime import datetime
 import os
-
+import uuid
 app = Flask(__name__)
 
 
@@ -175,7 +175,7 @@ def on_message(client, userdata, msg):
 
 mqtt_client = mqtt.Client(
     mqtt.CallbackAPIVersion.VERSION2,
-    client_id="flask_web"
+    client_id="flask_web_" + uuid.uuid4().hex[:8]
 )
 
 

@@ -172,7 +172,7 @@ mqtt_client = mqtt.Client(
     client_id="flask_web_" + uuid.uuid4().hex[:8],
     protocol=mqtt.MQTTv311
 )
-
+#bình 
 mqtt_client.username_pw_set(
     MQTT_USERNAME,
     MQTT_PASSWORD

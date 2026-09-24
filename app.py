@@ -510,7 +510,47 @@ ket_noi_mqtt()
 # =========================================================
 # TRANG CHỦ
 # =========================================================
+@app.route("/api/test-mqtt", methods=["GET"])
+def test_mqtt():
 
+    try:
+
+        if not mqtt_client.is_connected():
+            return jsonify({
+                "success": False,
+                "message": "MQTT chua ket noi"
+            }), 503
+
+        result = mqtt_client.publish(
+            "traffic/test",
+            "TEST_FROM_RENDER",
+            qos=0,
+            retain=False
+        )
+
+        print("================================")
+        print("MQTT TEST")
+        print("CONNECTED:", mqtt_client.is_connected())
+        print("RC:", result.rc)
+        print("MID:", result.mid)
+        print("================================")
+
+        return jsonify({
+            "success": result.rc == mqtt.MQTT_ERR_SUCCESS,
+            "rc": result.rc,
+            "mid": result.mid
+        })
+
+    except Exception as e:
+
+        print("MQTT TEST ERROR:", repr(e))
+
+        return jsonify({
+            "success": False,
+            "message": str(e)
+        }), 500
+
+    
 @app.route("/")
 def home():
 

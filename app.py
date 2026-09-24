@@ -201,7 +201,7 @@ def luu_lich_su(status):
 
 
 # =========================================================
-# MQTT STATUS - CONNECT
+# MQTT CONNECT
 # =========================================================
 
 def on_connect(
@@ -213,8 +213,8 @@ def on_connect(
 ):
 
     print("================================")
-    print("MQTT STATUS: DA KET NOI")
-    print("MQTT STATUS CONNECT REASON:", reason_code)
+    print("MQTT: DA KET NOI")
+    print("MQTT CONNECT REASON:", reason_code)
     print("================================")
 
     result = client.subscribe(
@@ -224,14 +224,14 @@ def on_connect(
     if result[0] == mqtt.MQTT_ERR_SUCCESS:
 
         print(
-            "MQTT STATUS: DA SUBSCRIBE",
+            "MQTT: DA SUBSCRIBE",
             TOPIC_STATUS
         )
 
     else:
 
         print(
-            "MQTT STATUS: LOI SUBSCRIBE",
+            "MQTT: LOI SUBSCRIBE",
             TOPIC_STATUS,
             "RC:",
             result[0]
@@ -239,7 +239,7 @@ def on_connect(
 
 
 # =========================================================
-# MQTT STATUS - DISCONNECT
+# MQTT DISCONNECT
 # =========================================================
 
 def on_disconnect(
@@ -251,13 +251,13 @@ def on_disconnect(
 ):
 
     print("================================")
-    print("MQTT STATUS: DA NGAT KET NOI")
-    print("MQTT STATUS DISCONNECT REASON:", reason_code)
+    print("MQTT: DA NGAT KET NOI")
+    print("MQTT DISCONNECT REASON:", reason_code)
     print("================================")
 
 
 # =========================================================
-# MQTT STATUS - PUBLISH ACK
+# MQTT PUBLISH ACK
 # =========================================================
 
 def on_publish(
@@ -269,7 +269,7 @@ def on_publish(
 ):
 
     print("================================")
-    print("MQTT STATUS: BROKER DA XAC NHAN PUBLISH")
+    print("MQTT: BROKER DA XAC NHAN PUBLISH")
     print("PUBLISH MID:", mid)
     print("PUBLISH REASON:", reason_code)
     print("================================")
@@ -350,8 +350,11 @@ def on_message(
 
 
 # =========================================================
-# MQTT CLIENT STATUS
-# Chuyên nhận traffic/status từ ESP32
+# MQTT CLIENT
+#
+# Dùng chung cho:
+#   traffic/status
+#   traffic/control
 # =========================================================
 
 mqtt_client = mqtt.Client(
@@ -368,33 +371,10 @@ mqtt_client = mqtt.Client(
 
 
 # =========================================================
-# MQTT CLIENT CONTROL
-# Chuyên gửi traffic/control tới ESP32
-# =========================================================
-
-control_client = mqtt.Client(
-
-    mqtt.CallbackAPIVersion.VERSION2,
-
-    client_id=(
-        "flask_control_"
-        + uuid.uuid4().hex[:8]
-    ),
-
-    protocol=mqtt.MQTTv311
-)
-
-
-# =========================================================
 # MQTT USERNAME + PASSWORD
 # =========================================================
 
 mqtt_client.username_pw_set(
-    MQTT_USERNAME,
-    MQTT_PASSWORD
-)
-
-control_client.username_pw_set(
     MQTT_USERNAME,
     MQTT_PASSWORD
 )
@@ -408,65 +388,6 @@ mqtt_client.tls_set(
     tls_version=ssl.PROTOCOL_TLS_CLIENT
 )
 
-control_client.tls_set(
-    tls_version=ssl.PROTOCOL_TLS_CLIENT
-)
-
-
-# =========================================================
-# CALLBACK MQTT CONTROL - CONNECT
-# =========================================================
-
-def control_on_connect(
-    client,
-    userdata,
-    flags,
-    reason_code,
-    properties
-):
-
-    print("================================")
-    print("MQTT CONTROL: DA KET NOI")
-    print("CONTROL CONNECT REASON:", reason_code)
-    print("================================")
-
-
-# =========================================================
-# CALLBACK MQTT CONTROL - DISCONNECT
-# =========================================================
-
-def control_on_disconnect(
-    client,
-    userdata,
-    flags,
-    reason_code,
-    properties
-):
-
-    print("================================")
-    print("MQTT CONTROL: DA NGAT KET NOI")
-    print("CONTROL DISCONNECT REASON:", reason_code)
-    print("================================")
-
-
-# =========================================================
-# CALLBACK MQTT CONTROL - PUBLISH ACK
-# =========================================================
-
-def control_on_publish(
-    client,
-    userdata,
-    mid,
-    reason_code,
-    properties
-):
-
-    print("================================")
-    print("MQTT CONTROL: BROKER DA XAC NHAN PUBLISH")
-    print("CONTROL PUBLISH MID:", mid)
-    print("CONTROL PUBLISH REASON:", reason_code)
-    print("================================")
-
 
 # =========================================================
 # KẾT NỐI MQTT
@@ -475,10 +396,6 @@ def control_on_publish(
 def ket_noi_mqtt():
 
     try:
-
-        # =================================================
-        # GÁN CALLBACK CHO CLIENT STATUS
-        # =================================================
 
         mqtt_client.on_connect = on_connect
 
@@ -491,22 +408,18 @@ def ket_noi_mqtt():
 
         print()
         print("================================")
-        print("MQTT STATUS: BAT DAU KET NOI...")
+        print("MQTT: BAT DAU KET NOI...")
         print("BROKER:", MQTT_BROKER)
         print("PORT:", MQTT_PORT)
         print("USERNAME:", MQTT_USERNAME)
 
         print(
-            "STATUS CLIENT ID:",
+            "CLIENT ID:",
             mqtt_client._client_id.decode()
         )
 
         print("================================")
 
-
-        # =================================================
-        # KẾT NỐI STATUS CLIENT
-        # =================================================
 
         mqtt_client.connect(
             MQTT_BROKER,
@@ -516,7 +429,7 @@ def ket_noi_mqtt():
 
 
         print(
-            "MQTT STATUS: CONNECT() DA HOAN THANH"
+            "MQTT: CONNECT() DA HOAN THANH"
         )
 
 
@@ -524,12 +437,12 @@ def ket_noi_mqtt():
 
 
         print(
-            "MQTT STATUS: DANG CHO XAC NHAN KET NOI..."
+            "MQTT: DANG CHO XAC NHAN KET NOI..."
         )
 
 
         # =================================================
-        # CHỜ STATUS CLIENT CONNECT
+        # CHỜ MQTT CONNECT THỰC SỰ
         # =================================================
 
         for i in range(15):
@@ -537,93 +450,8 @@ def ket_noi_mqtt():
             if mqtt_client.is_connected():
 
                 print("================================")
-                print("MQTT STATUS: KET NOI THANH CONG")
-                print("MQTT STATUS CONNECTED = True")
-                print("================================")
-
-                break
-
-
-            time.sleep(1)
-
-
-            print(
-                "MQTT STATUS: DANG CHO...",
-                i + 1,
-                "/ 15"
-            )
-
-
-        if not mqtt_client.is_connected():
-
-            print("================================")
-            print("MQTT STATUS: KHONG KET NOI DUOC")
-            print(
-                "MQTT STATUS CONNECTED =",
-                mqtt_client.is_connected()
-            )
-            print("================================")
-
-            return False
-
-
-        # =================================================
-        # KẾT NỐI MQTT CONTROL RIÊNG
-        # =================================================
-
-        control_client.on_connect = control_on_connect
-
-        control_client.on_disconnect = control_on_disconnect
-
-        control_client.on_publish = control_on_publish
-
-
-        print()
-        print("================================")
-        print("MQTT CONTROL: BAT DAU KET NOI...")
-        print("BROKER:", MQTT_BROKER)
-        print("PORT:", MQTT_PORT)
-        print("USERNAME:", MQTT_USERNAME)
-
-        print(
-            "CONTROL CLIENT ID:",
-            control_client._client_id.decode()
-        )
-
-        print("================================")
-
-
-        control_client.connect(
-            MQTT_BROKER,
-            MQTT_PORT,
-            60
-        )
-
-
-        print(
-            "MQTT CONTROL: CONNECT() DA HOAN THANH"
-        )
-
-
-        control_client.loop_start()
-
-
-        print(
-            "MQTT CONTROL: DANG CHO XAC NHAN KET NOI..."
-        )
-
-
-        # =================================================
-        # CHỜ CONTROL CLIENT CONNECT
-        # =================================================
-
-        for j in range(15):
-
-            if control_client.is_connected():
-
-                print("================================")
-                print("MQTT CONTROL: KET NOI THANH CONG")
-                print("MQTT CONTROL CONNECTED = True")
+                print("MQTT: KET NOI THANH CONG")
+                print("MQTT CONNECTED = True")
                 print("================================")
 
                 return True
@@ -633,18 +461,20 @@ def ket_noi_mqtt():
 
 
             print(
-                "MQTT CONTROL: DANG CHO...",
-                j + 1,
+                "MQTT: DANG CHO...",
+                i + 1,
                 "/ 15"
             )
 
 
         print("================================")
-        print("MQTT CONTROL: KHONG KET NOI DUOC")
+        print("MQTT: KHONG KET NOI DUOC")
+
         print(
-            "MQTT CONTROL CONNECTED =",
-            control_client.is_connected()
+            "MQTT CONNECTED =",
+            mqtt_client.is_connected()
         )
+
         print("================================")
 
 
@@ -655,10 +485,12 @@ def ket_noi_mqtt():
 
         print("================================")
         print("MQTT: LOI KET NOI")
+
         print(
             "LOI:",
             repr(e)
         )
+
         print("================================")
 
         return False
@@ -760,36 +592,39 @@ def api_control():
 
         print()
         print("==============================")
+
         print(
             "CHUAN BI GUI LENH:",
             command
         )
+
         print("==============================")
 
 
         # =================================================
-        # KIỂM TRA MQTT CONTROL
+        # KIỂM TRA MQTT
+        #
+        # Dùng chung mqtt_client đã nhận
+        # traffic/status ổn định
         # =================================================
 
         print(
-            "MQTT CONTROL CONNECTED:",
-            control_client.is_connected()
+            "MQTT CONNECTED:",
+            mqtt_client.is_connected()
         )
 
 
-        if not control_client.is_connected():
+        if not mqtt_client.is_connected():
 
             print(
-                "MQTT CONTROL: CHUA KET NOI"
+                "MQTT: CHUA KET NOI"
             )
 
             return jsonify({
 
                 "success": False,
 
-                "message": (
-                    "MQTT control chua ket noi"
-                )
+                "message": "MQTT chua ket noi"
 
             }), 503
 
@@ -797,19 +632,21 @@ def api_control():
         # =================================================
         # GỬI LỆNH SANG ESP32
         #
-        # Dùng MQTT client riêng cho traffic/control
-        # QoS 1 để broker xác nhận message
+        # Topic:
+        # traffic/control
+        #
+        # QoS 0 để API phản hồi nhanh.
         #
         # KHÔNG dùng wait_for_publish()
         # =================================================
 
-        result = control_client.publish(
+        result = mqtt_client.publish(
 
             TOPIC_CONTROL,
 
             command,
 
-            qos=1,
+            qos=0,
 
             retain=False
 
@@ -835,7 +672,7 @@ def api_control():
         if result.rc != mqtt.MQTT_ERR_SUCCESS:
 
             print(
-                "MQTT CONTROL PUBLISH LOI"
+                "MQTT PUBLISH LOI"
             )
 
             return jsonify({
@@ -843,7 +680,7 @@ def api_control():
                 "success": False,
 
                 "message": (
-                    "MQTT control publish loi"
+                    "MQTT publish loi"
                 ),
 
                 "rc": result.rc

@@ -4,8 +4,7 @@ import ssl
 import threading
 from datetime import datetime
 import os
-import uuid
-import time
+
 app = Flask(__name__)
 
 
@@ -103,7 +102,7 @@ def on_connect(client, userdata, flags, reason_code, properties):
     result = client.subscribe(TOPIC_STATUS)
 
     print(
-        "MQTT: SUBSCRIBE",
+        "MQTT: DA SUBSCRIBE",
         TOPIC_STATUS,
         "RC:",
         result[0]
@@ -138,6 +137,13 @@ def on_message(client, userdata, msg):
 
         data = payload.split(",")
 
+        # =================================================
+        # ESP32 gửi:
+        #
+        # H1,H2,H3,H4,PHASE,TIME,
+        # XANH1,VANG1,XANH2,VANG2
+        # =================================================
+
         if len(data) >= 10:
 
             status_data["h1"] = int(data[0])
@@ -146,6 +152,7 @@ def on_message(client, userdata, msg):
             status_data["h4"] = int(data[3])
 
             status_data["phase"] = data[4]
+
             status_data["time"] = int(data[5])
 
             status_data["xanh1"] = int(data[6])
@@ -154,41 +161,35 @@ def on_message(client, userdata, msg):
             status_data["xanh2"] = int(data[8])
             status_data["vang2"] = int(data[9])
 
+            # Lưu lịch sử
             luu_lich_su()
 
     except Exception as e:
 
-        print("MQTT: LOI DOC DU LIEU:", repr(e))
+        print("MQTT: LOI DOC DU LIEU:", e)
 
 
 # =========================================================
 # TẠO MQTT CLIENT
 # =========================================================
 
-
-#lala
 mqtt_client = mqtt.Client(
     mqtt.CallbackAPIVersion.VERSION2,
-    client_id="flask_web_" + uuid.uuid4().hex[:8],
-    protocol=mqtt.MQTTv311
+    client_id="flask_web"
 )
-#bình 
+
+
 mqtt_client.username_pw_set(
     MQTT_USERNAME,
     MQTT_PASSWORD
 )
 
+
 mqtt_client.tls_set(
     tls_version=ssl.PROTOCOL_TLS_CLIENT
 )
 
-def on_publish(client, userdata, mid, reason_code, properties):
 
-    print("================================")
-    print("MQTT: BROKER DA XAC NHAN PUBLISH")
-    print("PUBLISH MID:", mid)
-    print("PUBLISH REASON:", reason_code)
-    print("================================")
 # =========================================================
 # KẾT NỐI MQTT
 # =========================================================
@@ -197,10 +198,10 @@ def ket_noi_mqtt():
 
     try:
 
+        # Gắn callback
         mqtt_client.on_connect = on_connect
         mqtt_client.on_disconnect = on_disconnect
         mqtt_client.on_message = on_message
-        mqtt_client.on_publish = on_publish
 
         print()
         print("================================")
@@ -208,7 +209,6 @@ def ket_noi_mqtt():
         print("BROKER:", MQTT_BROKER)
         print("PORT:", MQTT_PORT)
         print("USERNAME:", MQTT_USERNAME)
-        print("CLIENT ID:", mqtt_client._client_id.decode())
         print("================================")
 
         mqtt_client.connect(
@@ -219,50 +219,15 @@ def ket_noi_mqtt():
 
         print("MQTT: CONNECT() DA HOAN THANH")
 
+        # Chạy MQTT network loop
         mqtt_client.loop_start()
 
-        print("MQTT: DANG CHO XAC NHAN KET NOI...")
-
-        # =================================================
-        # CHỜ MQTT CONNECT THỰC SỰ
-        # =================================================
-
-        for i in range(15):
-
-            if mqtt_client.is_connected():
-
-                print("================================")
-                print("MQTT: KET NOI THANH CONG")
-                print("MQTT CONNECTED = True")
-                print("================================")
-
-                return True
-
-            time.sleep(1)
-
-            print(
-                "MQTT: DANG CHO...",
-                i + 1,
-                "/ 15"
-            )
-
-
-        print("================================")
-        print("MQTT: KHONG KET NOI DUOC")
-        print("MQTT CONNECTED =", mqtt_client.is_connected())
-        print("================================")
-
-        return False
-
+        print("MQTT: DANG KHOI DONG...")
 
     except Exception as e:
 
-        print("================================")
-        print("MQTT: LOI KET NOI")
+        print("MQTT: KHONG KET NOI DUOC")
         print("LOI:", repr(e))
-        print("================================")
-
-        return False
 
 
 # =========================================================

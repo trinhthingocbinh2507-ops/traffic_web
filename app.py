@@ -166,7 +166,7 @@ def on_message(client, userdata, msg):
 # =========================================================
 
 
-
+#lala
 mqtt_client = mqtt.Client(
     mqtt.CallbackAPIVersion.VERSION2,
     client_id="flask_web_" + uuid.uuid4().hex[:8],

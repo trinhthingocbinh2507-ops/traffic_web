@@ -835,6 +835,282 @@ def test_mqtt():
         }), 500
 
 
+
+# =========================================================
+# API TEST MQTT DIRECT CLIENT
+#
+# DUNG DE KIEM TRA RIENG DUONG:
+# Render -> HiveMQ
+#
+# Client nay HOAN TOAN DOC LAP voi mqtt_client chinh.
+# Khong dung cho dieu khien thuc te.
+# =========================================================
+
+@app.route(
+    "/api/test-mqtt-direct",
+    methods=["GET"]
+)
+def test_mqtt_direct():
+
+    client = None
+    connected_event = threading.Event()
+    subscribed_event = threading.Event()
+    published_event = threading.Event()
+    result_data = {
+        "connected": False,
+        "subscribed": False,
+        "published": False,
+        "connect_reason": None,
+        "subscribe_reason": None,
+        "publish_reason": None
+    }
+
+    test_topic = "traffic/render_direct_test_" + uuid.uuid4().hex[:8]
+    test_payload = "DIRECT_TEST_FROM_RENDER"
+
+    def direct_on_connect(c, userdata, flags, reason_code, properties):
+        result_data["connect_reason"] = str(reason_code)
+        print("DIRECT MQTT CONNECT REASON:", reason_code)
+        if reason_code == mqtt.ReasonCodes.SUCCESS:
+            result_data["connected"] = True
+        connected_event.set()
+
+    def direct_on_subscribe(c, userdata, mid, reason_codes, properties):
+        print("DIRECT MQTT SUBSCRIBE REASON:", reason_codes)
+        result_data["subscribe_reason"] = str(reason_codes)
+        if reason_codes:
+            try:
+                result_data["subscribed"] = all(
+                    int(code) < 128 for code in reason_codes
+                )
+            except Exception:
+                result_data["subscribed"] = False
+        subscribed_event.set()
+
+    def direct_on_publish(c, userdata, mid, reason_code, properties):
+        print("DIRECT MQTT PUBLISH MID:", mid)
+        print("DIRECT MQTT PUBLISH REASON:", reason_code)
+        result_data["publish_reason"] = str(reason_code)
+        try:
+            result_data["published"] = (
+                int(reason_code) == 0
+            )
+        except Exception:
+            result_data["published"] = False
+        published_event.set()
+
+    def direct_on_disconnect(c, userdata, flags, reason_code, properties):
+        print("DIRECT MQTT DISCONNECT REASON:", reason_code)
+
+    def direct_on_log(c, userdata, level, buf):
+        print("DIRECT MQTT LOG:", buf)
+
+    try:
+
+        print()
+        print("========================================")
+        print("DIRECT MQTT TEST BAT DAU")
+        print("========================================")
+        print("BROKER:", MQTT_BROKER)
+        print("PORT:", MQTT_PORT)
+        print("USERNAME:", MQTT_USERNAME)
+        print("TOPIC:", test_topic)
+        print("PAYLOAD:", test_payload)
+        print("========================================")
+
+        client = mqtt.Client(
+            mqtt.CallbackAPIVersion.VERSION2,
+            client_id=(
+                "render_direct_"
+                + uuid.uuid4().hex[:10]
+            ),
+            protocol=mqtt.MQTTv311
+        )
+
+        client.username_pw_set(
+            MQTT_USERNAME,
+            MQTT_PASSWORD
+        )
+
+        client.tls_set(
+            tls_version=ssl.PROTOCOL_TLS_CLIENT
+        )
+
+        client.on_connect = direct_on_connect
+        client.on_subscribe = direct_on_subscribe
+        client.on_publish = direct_on_publish
+        client.on_disconnect = direct_on_disconnect
+        client.on_log = direct_on_log
+
+        client.connect(
+            MQTT_BROKER,
+            MQTT_PORT,
+            60
+        )
+
+        client.loop_start()
+
+        print("DIRECT MQTT: DANG CHO CONNECT...")
+
+        if not connected_event.wait(timeout=10):
+            return jsonify({
+                "success": False,
+                "stage": "connect",
+                "message": "Client rieng khong nhan duoc CONNACK trong 10 giay",
+                "connected": client.is_connected(),
+                "topic": test_topic
+            }), 502
+
+        if not result_data["connected"]:
+            return jsonify({
+                "success": False,
+                "stage": "connect",
+                "message": "HiveMQ tu choi ket noi client test",
+                "connect_reason": result_data["connect_reason"],
+                "topic": test_topic
+            }), 502
+
+        sub_result = client.subscribe(
+            test_topic,
+            qos=1
+        )
+
+        print("DIRECT MQTT SUBSCRIBE RC:", sub_result[0])
+        print("DIRECT MQTT SUBSCRIBE MID:", sub_result[1])
+
+        if sub_result[0] != mqtt.MQTT_ERR_SUCCESS:
+            return jsonify({
+                "success": False,
+                "stage": "subscribe_call",
+                "message": "Paho khong tao duoc SUBSCRIBE",
+                "rc": sub_result[0],
+                "mid": sub_result[1],
+                "topic": test_topic
+            }), 502
+
+        print("DIRECT MQTT: DANG CHO SUBACK...")
+
+        if not subscribed_event.wait(timeout=5):
+            return jsonify({
+                "success": False,
+                "stage": "subscribe_ack",
+                "message": "Khong nhan duoc SUBACK trong 5 giay",
+                "topic": test_topic,
+                "subscribe_rc": sub_result[0],
+                "subscribe_mid": sub_result[1]
+            }), 502
+
+        if not result_data["subscribed"]:
+            return jsonify({
+                "success": False,
+                "stage": "subscribe_ack",
+                "message": "HiveMQ khong chap nhan SUBSCRIBE",
+                "subscribe_reason": result_data["subscribe_reason"],
+                "topic": test_topic
+            }), 502
+
+        pub_result = client.publish(
+            test_topic,
+            test_payload,
+            qos=1,
+            retain=True
+        )
+
+        print("DIRECT MQTT PUBLISH RC:", pub_result.rc)
+        print("DIRECT MQTT PUBLISH MID:", pub_result.mid)
+
+        if pub_result.rc != mqtt.MQTT_ERR_SUCCESS:
+            return jsonify({
+                "success": False,
+                "stage": "publish_call",
+                "message": "Paho khong tao duoc PUBLISH",
+                "publish_rc": pub_result.rc,
+                "publish_mid": pub_result.mid,
+                "topic": test_topic,
+                "payload": test_payload
+            }), 502
+
+        print("DIRECT MQTT: DANG CHO PUBACK...")
+
+        if not published_event.wait(timeout=10):
+            return jsonify({
+                "success": False,
+                "stage": "publish_ack",
+                "message": "Khong nhan duoc PUBACK trong 10 giay",
+                "publish_rc": pub_result.rc,
+                "publish_mid": pub_result.mid,
+                "connected": client.is_connected(),
+                "topic": test_topic,
+                "payload": test_payload
+            }), 502
+
+        if not result_data["published"]:
+            return jsonify({
+                "success": False,
+                "stage": "publish_ack",
+                "message": "HiveMQ khong xac nhan PUBLISH",
+                "publish_reason": result_data["publish_reason"],
+                "publish_rc": pub_result.rc,
+                "publish_mid": pub_result.mid,
+                "topic": test_topic,
+                "payload": test_payload
+            }), 502
+
+        print("DIRECT MQTT TEST: THANH CONG")
+        print("DIRECT MQTT TEST: HiveMQ da xac nhan PUBACK")
+        print("========================================")
+
+        return jsonify({
+            "success": True,
+            "broker_confirmed": True,
+            "message": "Render -> HiveMQ OK voi MQTT client doc lap",
+            "stage": "publish_ack",
+            "connected": True,
+            "subscribed": True,
+            "published": True,
+            "connect_reason": result_data["connect_reason"],
+            "subscribe_reason": result_data["subscribe_reason"],
+            "publish_reason": result_data["publish_reason"],
+            "publish_rc": pub_result.rc,
+            "publish_mid": pub_result.mid,
+            "topic": test_topic,
+            "payload": test_payload,
+            "retain": True,
+            "qos": 1
+        })
+
+    except Exception as e:
+
+        print()
+        print("========================================")
+        print("DIRECT MQTT TEST ERROR")
+        print("LOI:", repr(e))
+        print("========================================")
+
+        return jsonify({
+            "success": False,
+            "stage": "exception",
+            "message": str(e),
+            "topic": test_topic,
+            "payload": test_payload
+        }), 500
+
+    finally:
+
+        if client is not None:
+            try:
+                client.loop_stop()
+            except Exception:
+                pass
+
+            try:
+                if client.is_connected():
+                    client.disconnect()
+            except Exception:
+                pass
+
+
+
 # =========================================================
 # API CONTROL
 # =========================================================

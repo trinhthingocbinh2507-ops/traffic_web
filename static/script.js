@@ -321,7 +321,7 @@ function capNhatGiaoDienCheDo(mode) {
     capNhatThoiGianManual();
   }
 }
-
+///lâla
 // ============================================================
 // GỬI MQTT QUA FLASK (ĐÃ ĐIỀU CHỈNH CHUẨN PACKET)
 // ============================================================

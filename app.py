@@ -366,7 +366,7 @@ mqtt_client = mqtt.Client(
         + uuid.uuid4().hex[:8]
     ),
 
-    protocol=mqtt.MQTTv311
+    protocol=mqtt.MQTTv5
 )
 
 

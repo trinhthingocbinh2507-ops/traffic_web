@@ -686,7 +686,7 @@ def api_control():
 
             command,
 
-            qos=0,
+            qos=1,
 
             retain=False
 

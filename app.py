@@ -348,7 +348,8 @@ def on_message(
             repr(e)
         )
 
-
+def on_log(client, userdata, level, buf):
+    print("MQTT LOG:", buf)
 # =========================================================
 # MQTT CLIENT
 #
@@ -387,8 +388,7 @@ mqtt_client.username_pw_set(
 mqtt_client.tls_set(
     tls_version=ssl.PROTOCOL_TLS_CLIENT
 )
-def on_log(client, userdata, level, buf):
-    print("MQTT LOG:", buf)
+
 
 # =========================================================
 # KẾT NỐI MQTT
@@ -523,7 +523,7 @@ def test_mqtt():
         result = mqtt_client.publish(
             "traffic/test",
             "TEST_FROM_RENDER",
-            qos=0,
+            qos=1,
             retain=False
         )
 

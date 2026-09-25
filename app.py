@@ -387,7 +387,8 @@ mqtt_client.username_pw_set(
 mqtt_client.tls_set(
     tls_version=ssl.PROTOCOL_TLS_CLIENT
 )
-
+def on_log(client, userdata, level, buf):
+    print("MQTT LOG:", buf)
 
 # =========================================================
 # KẾT NỐI MQTT
@@ -398,12 +399,10 @@ def ket_noi_mqtt():
     try:
 
         mqtt_client.on_connect = on_connect
-
         mqtt_client.on_disconnect = on_disconnect
-
         mqtt_client.on_message = on_message
-
         mqtt_client.on_publish = on_publish
+        mqtt_client.on_log = on_log
 
 
         print()

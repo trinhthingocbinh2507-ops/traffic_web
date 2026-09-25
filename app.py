@@ -533,11 +533,16 @@ def test_mqtt():
         print("RC:", result.rc)
         print("MID:", result.mid)
         print("================================")
+        print("WAIT ACK...")
+        result.wait_for_publish(timeout=5)
+        print("PUBLISHED:", result.is_published())
+        print("================================")
 
         return jsonify({
-            "success": result.rc == mqtt.MQTT_ERR_SUCCESS,
+            "success": result.is_published(),
             "rc": result.rc,
-            "mid": result.mid
+            "mid": result.mid,
+            "published": result.is_published()
         })
 
     except Exception as e:

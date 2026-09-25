@@ -870,9 +870,15 @@ def test_mqtt_direct():
 
     def direct_on_connect(c, userdata, flags, reason_code, properties):
         result_data["connect_reason"] = str(reason_code)
+
         print("DIRECT MQTT CONNECT REASON:", reason_code)
-        if reason_code == mqtt.ReasonCodes.SUCCESS:
+
+        if reason_code == 0:
             result_data["connected"] = True
+            print("DIRECT MQTT: CONNECT THANH CONG")
+        else:
+            print("DIRECT MQTT: CONNECT THAT BAI")
+
         connected_event.set()
 
     def direct_on_subscribe(c, userdata, mid, reason_codes, properties):

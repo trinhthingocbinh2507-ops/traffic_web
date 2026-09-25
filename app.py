@@ -633,7 +633,7 @@ def test_mqtt():
 
             "TEST_FROM_RENDER",
 
-            qos=1,
+            qos=0,
 
             retain=False
 

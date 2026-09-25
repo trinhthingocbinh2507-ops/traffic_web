@@ -321,19 +321,23 @@ function capNhatGiaoDienCheDo(mode) {
     capNhatThoiGianManual();
   }
 }
-///lâla
+
 // ============================================================
-// GỬI MQTT QUA FLASK (ĐÃ ĐIỀU CHỈNH CHUẨN PACKET)
+// GỬI MQTT QUA FLASK
 // ============================================================
+
 async function guiMQTT(topic, data) {
   try {
     const response = await fetch(API_CONTROL, {
       method: "POST",
+
       headers: {
         "Content-Type": "application/json",
       },
+
       body: JSON.stringify({
-        command: data, // Chỉ gửi duy nhất trường command
+        topic: topic,
+        command: data,
       }),
     });
 
@@ -343,11 +347,14 @@ async function guiMQTT(topic, data) {
       throw new Error(result.message || "Không gửi được lệnh");
     }
 
-    console.log("Đã gửi thành công:", data);
+    console.log("Đã gửi:", data);
+
     return true;
   } catch (error) {
     console.error("Lỗi gửi MQTT:", error);
+
     setText("manualTimeStatus", "❌ Không gửi được lệnh: " + error.message);
+
     return false;
   }
 }

@@ -162,6 +162,17 @@ vehicle_history = []
 
 MAX_HISTORY = 120
 
+# =========================================================
+# BIẾN DEBUG MQTT
+# Dùng để xác nhận Render -> HiveMQ -> Render.
+# Không ảnh hưởng đường điều khiển traffic/control.
+# =========================================================
+
+mqtt_test_event = threading.Event()
+mqtt_test_lock = threading.Lock()
+mqtt_test_last_payload = ""
+mqtt_test_last_topic = ""
+
 
 # =========================================================
 # LƯU LỊCH SỬ
@@ -319,6 +330,43 @@ def on_message(
     try:
 
         payload = msg.payload.decode()
+
+        print(
+            "MQTT NHAN MESSAGE:",
+            msg.topic,
+            "->",
+            payload
+        )
+
+        # =================================================
+        # MESSAGE DEBUG TỪ TRAFFIC/TEST
+        # Render subscribe topic test rồi tự publish.
+        # Nếu nhận lại message thì broker đã nhận và chuyển tiếp.
+        # =================================================
+
+        if msg.topic == "traffic/test":
+
+            global mqtt_test_last_payload
+            global mqtt_test_last_topic
+
+            with mqtt_test_lock:
+                mqtt_test_last_payload = payload
+                mqtt_test_last_topic = msg.topic
+
+            mqtt_test_event.set()
+
+            print(
+                "MQTT TEST: DA NHAN LAI TU BROKER"
+            )
+
+            return
+
+        if msg.topic != TOPIC_STATUS:
+            print(
+                "MQTT: BO QUA TOPIC KHONG PHAN LOAI:",
+                msg.topic
+            )
+            return
 
         print(
             "MQTT STATUS:",
@@ -613,40 +661,77 @@ def test_mqtt():
             )
 
             return jsonify({
-
                 "success": False,
-
-                "message":
-                    "MQTT chua ket noi"
-
+                "message": "MQTT chua ket noi"
             }), 503
 
         # =================================================
-        # GỬI MESSAGE TEST
+        # XOA KET QUA TEST CU
+        # =================================================
+
+        mqtt_test_event.clear()
+
+        global mqtt_test_last_payload
+        global mqtt_test_last_topic
+
+        with mqtt_test_lock:
+            mqtt_test_last_payload = ""
+            mqtt_test_last_topic = ""
+
+        # =================================================
+        # SUBSCRIBE TOPIC TEST
+        # =================================================
+
+        test_topic = "traffic/test"
+        test_payload = "TEST_FROM_RENDER"
+
+        sub_result = mqtt_client.subscribe(
+            test_topic,
+            qos=1
+        )
+
+        print(
+            "TEST SUBSCRIBE RC:",
+            sub_result[0]
+        )
+
+        print(
+            "TEST SUBSCRIBE MID:",
+            sub_result[1]
+        )
+
+        if sub_result[0] != mqtt.MQTT_ERR_SUCCESS:
+
+            return jsonify({
+                "success": False,
+                "message": "Khong subscribe duoc topic test",
+                "rc": sub_result[0],
+                "mid": sub_result[1]
+            }), 500
+
+        # =================================================
+        # PUBLISH TEST
         #
-        # QoS 1 để kiểm tra PUBACK
+        # GIỮ QoS 0.
+        # Đây KHÔNG phải đường điều khiển thực tế.
+        # Ta xác nhận broker bằng cách nhận lại message.
         # =================================================
 
         result = mqtt_client.publish(
-
-            "traffic/test",
-
-            "TEST_FROM_RENDER",
-
+            test_topic,
+            test_payload,
             qos=0,
-
             retain=False
-
         )
 
         print(
             "TEST TOPIC:",
-            "traffic/test"
+            test_topic
         )
 
         print(
             "TEST PAYLOAD:",
-            "TEST_FROM_RENDER"
+            test_payload
         )
 
         print(
@@ -661,48 +746,77 @@ def test_mqtt():
 
         if result.rc != mqtt.MQTT_ERR_SUCCESS:
 
+            return jsonify({
+                "success": False,
+                "message": "MQTT publish loi",
+                "rc": result.rc,
+                "mid": result.mid
+            }), 500
+
+        # =================================================
+        # CHỜ MESSAGE QUAY LẠI QUA BROKER
+        # =================================================
+
+        print(
+            "MQTT TEST: DANG CHO MESSAGE QUAY LAI TU BROKER..."
+        )
+
+        received = mqtt_test_event.wait(timeout=5)
+
+        with mqtt_test_lock:
+            received_payload = mqtt_test_last_payload
+            received_topic = mqtt_test_last_topic
+
+        print(
+            "MQTT TEST: RECEIVED =",
+            received
+        )
+
+        print(
+            "MQTT TEST: RECEIVED TOPIC =",
+            received_topic
+        )
+
+        print(
+            "MQTT TEST: RECEIVED PAYLOAD =",
+            received_payload
+        )
+
+        print("================================")
+
+        if received and received_payload == test_payload:
+
             print(
-                "MQTT TEST: PUBLISH LOI"
+                "MQTT TEST: THANH CONG - BROKER DA NHAN VA GUI LAI MESSAGE"
             )
 
             return jsonify({
+                "success": True,
+                "broker_confirmed": True,
+                "message": "Render -> HiveMQ -> Render OK",
+                "topic": received_topic,
+                "payload": received_payload,
+                "publish_rc": result.rc,
+                "publish_mid": result.mid
+            })
 
-                "success": False,
-
-                "message":
-                    "MQTT publish loi",
-
-                "rc":
-                    result.rc,
-
-                "mid":
-                    result.mid
-
-            }), 500
-
-        print()
         print(
-            "MQTT TEST: PUBLISH DA DUOC PHAI"
+            "MQTT TEST: KHONG NHAN LAI MESSAGE TU BROKER"
         )
-        print(
-            "MQTT TEST: DANG CHO CALLBACK on_publish..."
-        )
-        print("================================")
 
         return jsonify({
-
-            "success": True,
-
-            "message":
-                "Paho da chap nhan publish",
-
-            "rc":
-                result.rc,
-
-            "mid":
-                result.mid
-
-        })
+            "success": False,
+            "broker_confirmed": False,
+            "message": (
+                "Paho da chap nhan publish "
+                "nhung Render khong nhan lai message tu broker"
+            ),
+            "topic": test_topic,
+            "payload": test_payload,
+            "publish_rc": result.rc,
+            "publish_mid": result.mid,
+            "mqtt_connected": mqtt_client.is_connected()
+        }), 502
 
     except Exception as e:
 
@@ -716,12 +830,8 @@ def test_mqtt():
         print("================================")
 
         return jsonify({
-
             "success": False,
-
-            "message":
-                str(e)
-
+            "message": str(e)
         }), 500
 
 

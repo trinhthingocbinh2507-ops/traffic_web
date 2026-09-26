@@ -896,7 +896,7 @@ def test_mqtt_direct():
         result_data["subscribed"] = all(
             not reason.is_failure for reason in reason_codes
         )   
-
+#lala
         if result_data["subscribed"]:
             print("DIRECT MQTT: SUBSCRIBE THANH CONG")
         else:

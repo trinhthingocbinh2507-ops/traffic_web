@@ -243,11 +243,12 @@ def api_control():
         result = publish_client.publish(
             TOPIC_CONTROL,
             command,
-            qos=0, # Tăng lên QoS 1 để đảm bảo Broker nhận được lệnh trên môi trường Internet
+            qos=1, # Tăng lên QoS 1 để đảm bảo Broker nhận được lệnh trên môi trường Internet
             retain=False
         )
-        time.sleep(0.05) 
         
+        # Chờ gói tin gửi đi thành công trong tối đa 1 giây
+        result.wait_for_publish(timeout=1)
         
         # Ngắt kết nối ngay sau khi gửi xong để giải phóng tài nguyên
         publish_client.disconnect()

@@ -212,56 +212,48 @@ def api_history():
 
 
 # =========================================================
-# WEB -> ESP32
+# WEB -> ESP32 (ĐÃ SỬA ĐỂ CHẠY TRÊN SERVER INTERNET)
 # =========================================================
 @app.route("/api/control", methods=["POST"])
 def api_control():
     try:
         data = request.get_json()
-
         if not data:
-            return jsonify({
-                "success": False,
-                "message": "Khong co du lieu JSON"
-            }), 400
+            return jsonify({"success": False, "message": "Khong co du lieu JSON"}), 400
 
         command = data.get("command")
-
         if not command:
-            return jsonify({
-                "success": False,
-                "message": "Thieu command"
-            }), 400
+            return jsonify({"success": False, "message": "Thieu command"}), 400
 
         print("CHUAN BI GUI LENH:", command)
-        print("MQTT CONNECTED:", mqtt_client.is_connected())
 
-        if not mqtt_client.is_connected():
-            return jsonify({
-                "success": False,
-                "message": "MQTT chua ket noi"
-            }), 503
+        # Tạo một Client MQTT ngắn hạn riêng biệt để gửi lệnh, tránh xung đột luồng của Gunicorn
+        publish_client = mqtt.Client(
+            mqtt.CallbackAPIVersion.VERSION2,
+            client_id="flask_control_" + uuid.uuid4().hex[:8],
+            protocol=mqtt.MQTTv311
+        )
+        publish_client.username_pw_set(MQTT_USERNAME, MQTT_PASSWORD)
+        publish_client.tls_set(tls_version=ssl.PROTOCOL_TLS_CLIENT)
 
-        # QoS 0 de API phan hoi nhanh.
-        # Khong dung wait_for_publish().
-        result = mqtt_client.publish(
+        # Tiến hành kết nối đồng bộ ngắn hạn
+        publish_client.connect(MQTT_BROKER, MQTT_PORT, 60)
+        
+        # Gửi dữ liệu xuống ESP32
+        result = publish_client.publish(
             TOPIC_CONTROL,
             command,
-            qos=0,
+            qos=1, # Tăng lên QoS 1 để đảm bảo Broker nhận được lệnh trên môi trường Internet
             retain=False
         )
+        
+        # Chờ gói tin gửi đi thành công trong tối đa 3 giây
+        result.wait_for_publish(timeout=3)
+        
+        # Ngắt kết nối ngay sau khi gửi xong để giải phóng tài nguyên
+        publish_client.disconnect()
 
-        print("CONTROL PUBLISH RC:", result.rc)
-        print("CONTROL PUBLISH MID:", result.mid)
-
-        if result.rc != mqtt.MQTT_ERR_SUCCESS:
-            return jsonify({
-                "success": False,
-                "message": "MQTT publish loi",
-                "rc": result.rc
-            }), 500
-
-        print("MQTT CONTROL: DA GUI LENH:", command)
+        print(f"MQTT CONTROL: DA GUI LENH [{command}] THANH CONG XUONG ESP32")
 
         return jsonify({
             "success": True,
@@ -272,7 +264,7 @@ def api_control():
         print("API CONTROL ERROR:", repr(e))
         return jsonify({
             "success": False,
-            "message": str(e)
+            "message": f"Loi gui lenh: {str(e)}"
         }), 500
 
 

@@ -883,14 +883,25 @@ def test_mqtt_direct():
 
     def direct_on_subscribe(c, userdata, mid, reason_codes, properties):
         print("DIRECT MQTT SUBSCRIBE REASON:", reason_codes)
+
         result_data["subscribe_reason"] = str(reason_codes)
-        if reason_codes:
-            try:
-                result_data["subscribed"] = all(
-                    int(code) < 128 for code in reason_codes
-                )
-            except Exception:
-                result_data["subscribed"] = False
+
+        if not reason_codes:
+            ["subscribed"] = False
+            print("DIRECT MQTT: SUBSCRIBE THAT BAI")
+            subscribed_event.set()
+            return
+
+    # Paho MQTT v2 trả về ReasonCode object
+        result_data["subscribed"] = all(
+            not reason.is_failure for reason in reason_codes
+        )   
+
+        if result_data["subscribed"]:
+            print("DIRECT MQTT: SUBSCRIBE THANH CONG")
+        else:
+            print("DIRECT MQTT: SUBSCRIBE THAT BAI")
+
         subscribed_event.set()
 
     def direct_on_publish(c, userdata, mid, reason_code, properties):

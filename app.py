@@ -248,7 +248,7 @@ def api_control():
         )
         
         # Chờ gói tin gửi đi thành công trong tối đa 3 giây
-        result.wait_for_publish(timeout=3)
+        result.wait_for_publish(timeout=1)
         
         # Ngắt kết nối ngay sau khi gửi xong để giải phóng tài nguyên
         publish_client.disconnect()
